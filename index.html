@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Product Filter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        .filter-section {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 30px;
+            gap: 15px;
+        }
+
+        label {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #555;
+        }
+
+        select {
+            padding: 10px 20px;
+            font-size: 1em;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            background-color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        select:hover {
+            border-color: #764ba2;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #764ba2;
+            box-shadow: 0 0 0 3px rgba(118, 75, 162, 0.2);
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .product-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .product-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .product-card.hidden {
+            display: none;
+        }
+
+        .product-icon {
+            font-size: 4em;
+            margin-bottom: 15px;
+        }
+
+        .product-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .product-category {
+            display: inline-block;
+            background-color: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .product-price {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #764ba2;
+            margin-top: 10px;
+        }
+
+        .no-products {
+            text-align: center;
+            font-size: 1.3em;
+            color: #999;
+            margin-top: 50px;
+            display: none;
+        }
+
+        .no-products.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛍️ Product Store</h1>
+        
+        <div class="filter-section">
+            <label for="categoryFilter">Filter by Category:</label>
+            <select id="categoryFilter">
+                <option value="all">All Products</option>
+                <option value="shoes">Shoes</option>
+                <option value="shirts">Shirts</option>
+                <option value="gadgets">Gadgets</option>
+            </select>
+        </div>
+
+        <div class="products-grid" id="productsGrid">
+            <!-- Products will be dynamically generated here -->
+        </div>
+
+        <div class="no-products" id="noProducts">
+            No products found in this category.
+        </div>
+    </div>
+
+    <script>
+        // Product data
+        const products = [
+            { id: 1, name: 'Running Shoes', category: 'shoes', price: '$89.99', icon: '👟' },
+            { id: 2, name: 'Casual Sneakers', category: 'shoes', price: '$65.99', icon: '👞' },
+            { id: 3, name: 'Sports Shoes', category: 'shoes', price: '$95.99', icon: '🥾' },
+            { id: 4, name: 'Cotton T-Shirt', category: 'shirts', price: '$29.99', icon: '👕' },
+            { id: 5, name: 'Formal Shirt', category: 'shirts', price: '$49.99', icon: '👔' },
+            { id: 6, name: 'Polo Shirt', category: 'shirts', price: '$39.99', icon: '👚' },
+            { id: 7, name: 'Wireless Headphones', category: 'gadgets', price: '$129.99', icon: '🎧' },
+            { id: 8, name: 'Smart Watch', category: 'gadgets', price: '$199.99', icon: '⌚' },
+            { id: 9, name: 'Bluetooth Speaker', category: 'gadgets', price: '$79.99', icon: '🔊' },
+            { id: 10, name: 'Hiking Boots', category: 'shoes', price: '$110.99', icon: '🥾' },
+            { id: 11, name: 'Denim Shirt', category: 'shirts', price: '$55.99', icon: '👕' },
+            { id: 12, name: 'Wireless Mouse', category: 'gadgets', price: '$45.99', icon: '🖱️' }
+        ];
+
+        // Get DOM elements
+        const productsGrid = document.getElementById('productsGrid');
+        const categoryFilter = document.getElementById('categoryFilter');
+        const noProducts = document.getElementById('noProducts');
+
+        // Function to create product card HTML
+        function createProductCard(product) {
+            const card = document.createElement('div');
+            card.className = 'product-card';
+            card.setAttribute('data-category', product.category);
+            
+            card.innerHTML = `
+                <div class="product-icon">${product.icon}</div>
+                <div class="product-name">${product.name}</div>
+                <span class="product-category">${product.category.toUpperCase()}</span>
+                <div class="product-price">${product.price}</div>
+            `;
+            
+            return card;
+        }
+
+        // Function to display all products
+        function displayProducts() {
+            productsGrid.innerHTML = '';
+            products.forEach(product => {
+                const card = createProductCard(product);
+                productsGrid.appendChild(card);
+            });
+        }
+
+        // Function to filter products
+        function filterProducts(category) {
+            const allCards = document.querySelectorAll('.product-card');
+            let visibleCount = 0;
+
+            allCards.forEach(card => {
+                const cardCategory = card.getAttribute('data-category');
+                
+                if (category === 'all' || cardCategory === category) {
+                    card.classList.remove('hidden');
+                    visibleCount++;
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+
+            // Show/hide "no products" message
+            if (visibleCount === 0) {
+                noProducts.classList.add('show');
+            } else {
+                noProducts.classList.remove('show');
+            }
+        }
+
+        // Event listener for dropdown change
+        categoryFilter.addEventListener('change', function() {
+            const selectedCategory = this.value;
+            filterProducts(selectedCategory);
+        });
+
+        // Initialize the page with all products
+        displayProducts();
+    </script>
+</body>
+</html>
